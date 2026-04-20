@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>像素风角色概念稿</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d0d1a;
+    font-family: 'Courier New', monospace;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+    min-height: 100vh;
+  }
+  h1 { color: #c8b4ff; letter-spacing: 6px; font-size: 12px; text-transform: uppercase; margin-bottom: 6px; }
+  .subtitle { color: #555; font-size: 10px; letter-spacing: 2px; margin-bottom: 48px; }
+
+  .pet-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 56px;
+    gap: 12px;
+  }
+  .pet-name { color: #c8b4ff; font-size: 14px; letter-spacing: 4px; }
+  .pet-species { color: #555; font-size: 10px; letter-spacing: 2px; margin-top: -8px; }
+
+  .stages {
+    display: flex;
+    gap: 36px;
+    align-items: flex-end;
+  }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .stage-label {
+    font-size: 9px;
+    color: #444;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .divider {
+    width: 240px;
+    height: 1px;
+    background: #1e1e36;
+    margin: 8px 0 32px;
+  }
+</style>
+</head>
+<body>
+
+<h1>像素风角色概念稿</h1>
+<p class="subtitle">Scale 5x · MVP v0.1 · 蛋 / 幼年 / 成年</p>
+
+<div id="app"></div>
+
+<script>
+// ─── pixel art renderer ───────────────────────────────────────────────────
+function makeCanvas(w, h, scale) {
+  const c = document.createElement('canvas');
+  c.width = w * scale;
+  c.height = h * scale;
+  return c;
+}
+
+function drawPixels(canvas, rows, palette, scale) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  rows.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      if (ch !== '.' && palette[ch]) {
+        ctx.fillStyle = palette[ch];
+        ctx.fillRect(x * scale, y * scale, scale, scale);
+      }
+    });
+  });
+}
+
+// ─── 鸽太 Hato ────────────────────────────────────────────────────────────
+const HATO_PAL = {
+  G: '#BBC2C7', // gray body
+  W: '#E8E4E0', // light belly
+  B: '#1C1C1C', // black eye
+  O: '#D4621A', // orange beak/feet
+  P: '#F0A0B0', // pink cheek
+  D: '#8E979C', // dark wing
+  S: '#A2ABAF', // shadow gray
+};
+
+const hato_egg = [
+  '....GGGG....',
+  '...GGGGGG...',
+  '..GGGGGGGG..',
+  '..GGW..WGG..',
+  '..GGGGGGGG..',
+  '..GGGOOGGGG.',
+  '..GGGGGGGG..',
+  '..GGGGGGGG..',
+  '...GGGGGG...',
+  '....GGGG....',
+];
+
+const hato_young = [
+  '................',
+  '....GGGGGGGG....',
+  '...GGGGGGGGGG...',
+  '..GGGGGGGGGGGG..',
+  '..GGGB..G..BGGG.',
+  '..GGGGGGGGGGGG..',
+  '..GGGGOOOOGGGG..',
+  '..GGGGGGGGGGGG..',
+  '.GPG..GGGGGG..PG',
+  '..GGGGGGGGGGGG..',
+  '..GGGGGGGGGGGG..',
+  '..GGGDDGGGGDDG..',
+  '..GGGDWWWWWDGG..',
+  '..GGGGWWWWWGGG..',
+  '...GGGGGGGGGG...',
+  '....GGGGGGGG....',
+  '.....OO..OO.....',
+  '................',
+];
+
+const hato_adult = [
+  '....................',
+  '......GGGGGGGG......',
+  '....GGGGGGGGGGGG....',
+  '...GGGGGGGGGGGGGG...',
+  '..GGGGGGGGGGGGGGGG..',
+  '..GGGB...GG...BGGG..',
+  '..GGGBBG.GG.GBGGGG..',
+  '..GGGGGGGGGGGGGGGG..',
+  '..GGGGGGOOOOGGGGGG..',
+  '..GGGGGGGGGGGGGGGG..',
+  '.GPGGGGGGGGGGGGGPGG.',
+  '..GGGGGGGGGGGGGGGG..',
+  '..GGGGGGGGGGGGGGGG..',
+  '..GGDDDGGGGGGGDDDG..',
+  '..GGDWWWWWWWWWWDGG..',
+  '..GGGDWWWWWWWWDGGG..',
+  '..GGGGWWWWWWWWGGGG..',
+  '...GGGGGGGGGGGGGG...',
+  '....GGGGGGGGGGGG....',
+  '......OOO..OOO......',
+  '....................',
+];
+
+// ─── 福丸 Fukumaru ────────────────────────────────────────────────────────
+const FUKU_PAL = {
+  C: '#F0EBD8', // cream body
+  N: '#2E1E0A', // dark brown outline
+  P: '#F0B0C0', // pink inner ear
+  B: '#1C1C1C', // black eyes
+  Y: '#8A6010', // dark gold marking
+  L: '#FBF6EC', // light cream highlight
+  M: '#C4A870', // medium tan
+};
+
+const fuku_egg = [
+  '...NNNNNN...',
+  '..NCCCCCCN..',
+  '.NCCNNNNCCN.',
+  '.NCCCCCCCN..',
+  '.NCCCCCCCCN.',
+  '.NCCCCCCCCN.',
+  '.NCCCCCCCCN.',
+  '.NCCCCCCCCN.',
+  '..NCCCCCCCN.',
+  '...NNNNNN...',
+];
+
+const fuku_young = [
+  '..NNN......NNN..',
+  '..NCPN....NPCN..',
+  '..NPPN....NPPN..',
+  '.NNNNNNNNNNNNNN.',
+  '.NCCCCCCCCCCCCN.',
+  '.NCYYYYCCYYYYCN.',
+  '.NCCCCBNBNCCCCN.',
+  '.NCCCCCCCCCCCCN.',
+  '.NCYNCYNCYNCYCN.',
+  '.NCCNNN..NNNCCCN',
+  '..NCCCCCCCCCCN..',
+  '..NCCCCCCCCCCN..',
+  '..NCYYYCCCYYCN..',
+  '..NCCYCCCCYCCN..',
+  '..NCYYYCCCYYCN..',
+  '..NCCCCCCCCCCN..',
+  '...NNNCCCCNNN...',
+  '......NNNN......',
+];
+
+const fuku_adult = [
+  '...NNN........NNN...',
+  '...NCPN......NPCN...',
+  '...NPPNN....NNPPN...',
+  '.NNNNNNNNNNNNNNNNN..',
+  '.NCCCCCCCCCCCCCCCN..',
+  '.NCYYYYCCCCYYYYCCN..',
+  '.NCCCCBNN.NNBCCCCN..',
+  '.NCCCCCCCCCCCCCCN...',
+  '.NCCCCCCCCCCCCCCN...',
+  '.NCYNYCCCCCYNCYCN...',
+  '.NCCNNN....NNNCCN...',
+  '..NCCCCCCCCCCCN.....',
+  '..NCCCCCCCCCCCN.....',
+  '..NCYYYCCCYYYCCN....',
+  '..NCCYCCCCCYCCN.....',
+  '..NCYYYCCCYYYCCN....',
+  '..NCCCCCCCCCCCCN....',
+  '..NCCCCCCCCCCCCCN...',
+  '....NNNCCCCCCNNN....',
+  '......NNNNNNNN......',
+  '....................',
+];
+
+// ─── 小幽 Shoyu ───────────────────────────────────────────────────────────
+const GHOST_PAL = {
+  H: '#EDE8FF', // ghost white-lavender
+  S: '#C0B8E0', // shadow/shading
+  B: '#1C1C1C', // black eyes
+  V: '#6858B0', // dark purple accent
+  E: '#8870D0', // eye purple
+  G: '#A090C8', // mid purple
+};
+
+const ghost_egg = [
+  '....HHHHHH....',
+  '...HHHHHHHH...',
+  '..HHHHHHHHHH..',
+  '..HHS....SHH..',
+  '..HHHHHHHHHH..',
+  '..HHHVVVVHHHH.',
+  '..HHHHHHHHHH..',
+  '..HHHHHHHHHH..',
+  '..HHH..H..HH..',
+  '....HHHHHH....',
+];
+
+const ghost_young = [
+  '................',
+  '.....HHHHHH.....',
+  '....HHHHHHHH....',
+  '...HHHHHHHHHH...',
+  '..HHHHHHHHHHHH..',
+  '..HHHB..HH..BHH.',
+  '..HHHBBHHHHHBBH.',
+  '..HHHHHHHHHHHH..',
+  '..HHHHVG..GVHHH.',
+  '..HHHHHHHHHHHH..',
+  '..HHHHHHHHHHHH..',
+  '..HHHHHHHHHHHH..',
+  '..HSHSHSHSHSHSHH',
+  '.HHHHHHHHHHHHHH.',
+  '.HHH..HHHH..HHH.',
+  '..HH..HHHH..HH..',
+  '................',
+];
+
+const ghost_adult = [
+  '....................',
+  '......HHHHHHHH......',
+  '....HHHHHHHHHHHH....',
+  '...HHHHHHHHHHHHHH...',
+  '..HHHHHHHHHHHHHHHH..',
+  '..HHHB...HH...BHHH..',
+  '..HHHBBHHHHHHHBBHH..',
+  '..HHHHHHHHHHHHHHHH..',
+  '..HHHHVGG....GGVHHH.',
+  '..HHHHHHHHHHHHHHHH..',
+  '..HHHHHHHHHHHHHHHH..',
+  '..HHHHHHHHHHHHHHHH..',
+  '..HSHSHSHSHSHSHSHSHH',
+  '..HHHHHHHHHHHHHHHH..',
+  '.HHHHHHHHHHHHHHHHH..',
+  '.HHH...HHHHHH...HH..',
+  '..HHH..HHHHHH..HH...',
+  '....H..HHHHHH..H....',
+  '....................',
+  '....................',
+  '....................',
+];
+
+// ─── build UI ─────────────────────────────────────────────────────────────
+const SCALE = 5;
+
+const characters = [
+  {
+    name: 'HATO',
+    species: '鸽太 · 真实鸽子可爱化',
+    palette: HATO_PAL,
+    stages: [
+      { label: '蛋', pixels: hato_egg },
+      { label: '幼年', pixels: hato_young },
+      { label: '成年', pixels: hato_adult },
+    ],
+  },
+  {
+    name: 'FUKUMARU',
+    species: '福丸 · 达摩猫',
+    palette: FUKU_PAL,
+    stages: [
+      { label: '蛋', pixels: fuku_egg },
+      { label: '幼年', pixels: fuku_young },
+      { label: '成年', pixels: fuku_adult },
+    ],
+  },
+  {
+    name: 'SHŌYU',
+    species: '小幽 · 小幽灵',
+    palette: GHOST_PAL,
+    stages: [
+      { label: '蛋', pixels: ghost_egg },
+      { label: '幼年', pixels: ghost_young },
+      { label: '成年', pixels: ghost_adult },
+    ],
+  },
+];
+
+const app = document.getElementById('app');
+
+characters.forEach((char, ci) => {
+  const section = document.createElement('div');
+  section.className = 'pet-section';
+
+  section.innerHTML = `<div class="pet-name">${char.name}</div><div class="pet-species">${char.species}</div>`;
+
+  const stagesRow = document.createElement('div');
+  stagesRow.className = 'stages';
+
+  char.stages.forEach(stage => {
+    const stageDiv = document.createElement('div');
+    stageDiv.className = 'stage';
+
+    const rows = stage.pixels;
+    const w = rows[0].length;
+    const h = rows.length;
+    const canvas = makeCanvas(w, h, SCALE);
+    drawPixels(canvas, rows, char.palette, SCALE);
+
+    const label = document.createElement('div');
+    label.className = 'stage-label';
+    label.textContent = stage.label;
+
+    stageDiv.appendChild(canvas);
+    stageDiv.appendChild(label);
+    stagesRow.appendChild(stageDiv);
+  });
+
+  section.appendChild(stagesRow);
+
+  if (ci < characters.length - 1) {
+    const div = document.createElement('div');
+    div.className = 'divider';
+    section.appendChild(div);
+  }
+
+  app.appendChild(section);
+});
+</script>
+</body>
+</html>
